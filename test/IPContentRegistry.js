@@ -28,4 +28,19 @@ const { ethers } = require("hardhat");
     expect(result[0]).to.equal(creator.address);
     expect(result[1]).to.equal(500);
   });
+
+  it("verifies ownership of the registered content", async function () {
+    const [creator, other] = await ethers.getSigners();
+    const Factory = await ethers.getContractFactory("IPContentRegistry");
+    const registry = await Factory.deploy();
+    const hash = ethers.keccak256(ethers.toUtf8Bytes("ownership"));
+    await registry.registerContent(hash, "bafy-ownership");
+    
+    // Check ownership verification
+    const isOwner = await registry.verifyOwnership(1, creator.address);
+    expect(isOwner).to.be.true;
+
+    const isOtherOwner = await registry.verifyOwnership(1, other.address);
+    expect(isOtherOwner).to.be.false;
+  });
 });

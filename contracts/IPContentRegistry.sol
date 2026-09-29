@@ -44,6 +44,10 @@ contract IPContentRegistry is ERC721, IERC2981, Ownable {
         royaltyBps = newRoyaltyBps;
     }
 
+    function verifyOwnership(uint256 tokenId, address user) external view returns (bool) {
+        return ownerOf(tokenId) == user;
+    }
+
     function royaltyInfo(uint256 tokenId, uint256 salePrice)
         external
         view
