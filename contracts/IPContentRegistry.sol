@@ -17,6 +17,7 @@ contract IPContentRegistry is ERC721, IERC2981, Ownable {
     }
 
     mapping(uint256 => ContentRecord) public records;
+    mapping(bytes32 => uint256) public hashToTokenId;
 
     event ContentRegistered(
         uint256 indexed tokenId,
@@ -33,9 +34,14 @@ contract IPContentRegistry is ERC721, IERC2981, Ownable {
         returns (uint256 tokenId)
     {
         require(contentHash != bytes32(0), "Invalid content hash");
+        require(hashToTokenId[contentHash] == 0, "Content already registered");
+        
         tokenId = _nextTokenId++;
         _safeMint(msg.sender, tokenId);
+        
         records[tokenId] = ContentRecord(contentHash, ipfsCid, block.timestamp, msg.sender);
+        hashToTokenId[contentHash] = tokenId;
+        
         emit ContentRegistered(tokenId, msg.sender, contentHash, ipfsCid, block.timestamp);
     }
 
@@ -46,6 +52,16 @@ contract IPContentRegistry is ERC721, IERC2981, Ownable {
 
     function verifyOwnership(uint256 tokenId, address user) external view returns (bool) {
         return ownerOf(tokenId) == user;
+    }
+
+    function verifyByHash(bytes32 contentHash) external view returns (bool exists, uint256 tokenId, address owner, uint256 timestamp) {
+        tokenId = hashToTokenId[contentHash];
+        if (tokenId == 0) {
+            return (false, 0, address(0), 0);
+        }
+        exists = true;
+        owner = ownerOf(tokenId);
+        timestamp = records[tokenId].timestamp;
     }
 
     function royaltyInfo(uint256 tokenId, uint256 salePrice)
