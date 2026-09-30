@@ -4,7 +4,7 @@ A decentralized platform for registering digital content ownership evidence on-c
 
 ---
 
-## 🚀 How to Run and Test (Sepolia Testnet)
+## How to Run and Test (Sepolia Testnet)
 
 Follow these steps to deploy and test the application from top to bottom.
 
@@ -48,7 +48,7 @@ Wait for the transaction to finish and **copy the deployed IPContentRegistry add
 
 ---
 
-## 🛠 Further Work (For Team Members)
+## Further Work (For Team Members)
 
 We have successfully completed the core registration logic, the hashing flow, and the ownership verification system. Here is the roadmap for team members to continue:
 
