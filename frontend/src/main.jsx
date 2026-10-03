@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { ethers } from "ethers";
 import "./style.css";
+import { pinToIpfs, ipfsUrl } from "./ipfs.js";
 
 const SEPOLIA_CHAIN_ID = "0xaa36a7"; // 11155111 in hex
 const SEPOLIA_RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
@@ -228,19 +229,24 @@ function App() {
       const onSepolia = await ensureSepoliaNetwork();
       if (!onSepolia) throw new Error("Please switch MetaMask to Sepolia Testnet.");
 
-      if (!hash) throw new Error("Please select a file to register.");
+      if (!file || !hash) throw new Error("Please select a file to register.");
       if (isAlreadyRegistered) {
         throw new Error(`This content is already registered on Sepolia as NFT #${isAlreadyRegistered.tokenId}!`);
       }
+
+      setRegisterStatus("1/4: Uploading and pinning file to IPFS via Pinata...");
+      const ipfsData = await pinToIpfs(file, hash);
+      const finalCid = ipfsData.cid || cid || "";
+      setCid(finalCid);
 
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(registryAddress, REGISTRY_ABI, signer);
 
-      setRegisterStatus("1/3: Confirm the registration in your MetaMask wallet...");
-      const tx = await contract.registerContent(hash, cid || "");
+      setRegisterStatus(`2/4: Pinned to IPFS (${finalCid.slice(0, 12)}...). Confirm registration in your MetaMask wallet...`);
+      const tx = await contract.registerContent(hash, finalCid);
 
-      setRegisterStatus(`2/3: Transaction broadcast (Hash: ${tx.hash.slice(0, 14)}...). Waiting for Sepolia block confirmation...`);
+      setRegisterStatus(`3/4: Transaction broadcast (Hash: ${tx.hash.slice(0, 14)}...). Waiting for Sepolia block confirmation...`);
       const receipt = await tx.wait();
 
       setRegisterStatus(`✓ Successfully registered on Sepolia! Block #${receipt.blockNumber} (Tx: ${tx.hash})`);
@@ -614,8 +620,20 @@ function App() {
                 </div>
                 {verifyResult.ipfsCid && (
                   <div className="result-row">
-                    <span>IPFS CID</span>
-                    <strong>{verifyResult.ipfsCid}</strong>
+                    <span>IPFS Evidence</span>
+                    <a
+                      href={ipfsUrl(verifyResult.ipfsCid)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: "#38bdf8",
+                        textDecoration: "underline",
+                        wordBreak: "break-all",
+                        fontWeight: 600
+                      }}
+                    >
+                      {verifyResult.ipfsCid} ↗
+                    </a>
                   </div>
                 )}
               </div>

@@ -57,7 +57,26 @@ The script will output the deployed contract addresses:
 
 Copy these addresses into your root `.env` and `frontend/.env`.
 
-### 4. Configure and Launch the Frontend
+### 4. Configure and Launch the Backend (IPFS Pinning Service)
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   npm install
+   ```
+2. Configure `backend/.env` (using `backend/.env.example` as a template):
+   ```env
+   PINATA_JWT=your_pinata_jwt_here
+   FRONTEND_ORIGIN=http://localhost:5173
+   PORT=4000
+   GATEWAY_URL=https://gateway.pinata.cloud/ipfs
+   ```
+3. Start the backend server:
+   ```bash
+   npm run dev
+   ```
+   Verify health status at [http://localhost:4000/api/health](http://localhost:4000/api/health).
+
+### 5. Configure and Launch the Frontend
 1. Navigate to the frontend directory:
    ```bash
    cd frontend
@@ -65,6 +84,7 @@ Copy these addresses into your root `.env` and `frontend/.env`.
    ```
 2. Ensure `frontend/.env` is set:
    ```env
+   VITE_BACKEND_URL=http://localhost:4000
    VITE_CONTRACT_ADDRESS=your_deployed_registry_address
    VITE_LICENSE_ADDRESS=your_deployed_license_address
    ```
@@ -79,8 +99,8 @@ Copy these addresses into your root `.env` and `frontend/.env`.
 ## Application Flow
 
 ### 1. Register & Verify IP Content
-- **Register Content:** Under the **Registration & Proof** tab, choose any file. The dApp locally computes its SHA-256 hash in the browser. Click **Register On-Chain** to mint your IP ownership NFT.
-- **Verify Ownership:** In the verification panel, select the exact same file and click **Verify On Blockchain**. The dApp checks the smart contract and displays the owner address, token ID, timestamp, and IPFS link.
+- **Register Content:** Under the **Registration & Proof** tab, choose any file. The dApp locally computes its SHA-256 hash in the browser, uploads and pins it to IPFS via the Node backend and Pinata, and then calls `registerContent(hash, cid)` on Sepolia to mint your IP ownership NFT.
+- **Verify Ownership:** In the verification panel, select the exact same file and click **Verify On Blockchain**. The dApp queries the contract and displays the owner address, token ID, timestamp, and a direct clickable IPFS gateway link to the original file.
 
 ### 2. Configure Licensing Terms (Creators)
 - Switch to the **Creator Terms** tab.
@@ -137,9 +157,11 @@ npx hardhat run scripts/manageLicense.js check-license <licenseTokenId>
   - Integrated complete UI tabs in `frontend/src/main.jsx` and styling in `frontend/src/style.css`.
   - Added unit test coverage with 100% passing tests in `test/IPLicense.js`.
 
-- [ ] **2. IPFS and Backend Integration:**
-  - Build Node.js backend to accept files, compute hashes, and pin to Pinata/IPFS.
-  - Return `ipfsCid` to frontend to store alongside the content hash in `registerContent(hash, cid)`.
+- [x] **2. IPFS and Backend Integration (Completed):**
+  - Built Express.js backend with Multer memory storage and cryptographic SHA-256 integrity validation.
+  - Server-side Pinata IPFS pinning keeping credentials securely isolated from the frontend.
+  - Integrated client-side `pinToIpfs` upload flow into `registerContent(hash, cid)` on Sepolia.
+  - Added clickable IPFS gateway links in the verification panel.
 
 - [ ] **3. Advanced Frontend & Analytics:**
   - Creator Portfolio view (list all registered IPs owned by the connected wallet).
