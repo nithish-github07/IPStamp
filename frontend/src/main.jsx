@@ -480,8 +480,8 @@ function App() {
               <circle cx="22" cy="22" r="3.5" fill="#34d399" />
             </svg>
             <div>
-              <h1>IPChain</h1>
-              <p>Register ownership and license usage rights on Ethereum Sepolia.</p>
+              <h1>IPStamp</h1>
+              <p>A blockchain platform for verifying digital ownership and managing IP licensing securely.</p>
             </div>
           </div>
         </div>
