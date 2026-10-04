@@ -1,168 +1,178 @@
-# Intellectual Property Registration and Licensing Platform
+# IPStamp
 
-A decentralized Web3 platform for registering digital content ownership evidence on-chain and licensing usage rights through smart contracts.
-
----
-
-## Architecture Overview
-
-The platform is powered by two interoperable smart contracts and a modern React dApp:
-
-1. **`IPContentRegistry.sol` (ERC-721 + ERC-2981):**
-   - Mints an Ownership NFT for every piece of content registered with a SHA-256 hash.
-   - Preserves immutable registration timestamps and optional IPFS CIDs.
-   - Enforces creator royalties using the ERC-2981 standard.
-
-2. **`IPLicense.sol` (ERC-721 License NFTs):**
-   - Mints tradeable, verifiable **License NFTs** (`IPLIC`) linked to the parent IP token.
-   - Supports creator-configured licensing terms: ETH price, duration (perpetual or time-bound), max usage quotas, and license types (`Personal`, `Commercial`, `Exclusive`).
-   - Includes a **payable `buyLicense` function** that mints the License NFT to the buyer and automatically routes the purchase fee directly to the original IP creator.
-   - Tracks on-chain license validity (`isLicenseValid`), usage increments (`useLicense`), and revocation rights (`revokeLicense`).
+> A decentralized blockchain platform for registering, verifying, and licensing Intellectual Property on Ethereum.
 
 ---
 
-## How to Run and Test (Sepolia Testnet)
+## Description
 
-Follow these steps to deploy and run the entire platform.
+**IPStamp** is a full-stack Web3 application that empowers creators to permanently register their digital work on the Ethereum Sepolia blockchain as proof of ownership — and optionally monetize it through an on-chain licensing marketplace.
 
-### 1. Configure the Environment
-1. In the main project directory, configure your root `.env` (using `.env.example` as a template):
-   ```env
-   SEPOLIA_URL=https://ethereum-sepolia-rpc.publicnode.com
-   PRIVATE_KEY=your_metamask_private_key_here
-   REGISTRY_ADDRESS=
-   LICENSE_ADDRESS=
-   ```
-2. Install dependencies and compile the smart contracts:
-   ```bash
-   npm install
-   npx hardhat compile
-   ```
+When you register a file, its SHA-256 fingerprint is written to an immutable smart contract (ERC-721 NFT), creating a tamper-proof, timestamped record that proves you were first. You can then set licensing terms (price, duration, license type) and let anyone on the marketplace buy a License NFT (another ERC-721 token) that grants them documented, verifiable rights to use your work.
 
-### 2. Run the Automated Smart Contract Test Suite
-Verify that all 16 unit tests for registration, royalties, and licensing pass:
+No central authority controls the data — everything lives on-chain.
+
+---
+
+## How to Run Locally
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) v18+
+- [MetaMask](https://metamask.io/) browser extension
+- Sepolia testnet ETH (get some from a [faucet](https://sepoliafaucet.com/))
+- A [Pinata](https://pinata.cloud/) account (for IPFS pinning)
+
+### 1. Clone & Install Dependencies
+
 ```bash
-npx hardhat test
+git clone <your-repo-url>
+cd Intellectual-Property-Registration-and-Licensing-Platform
+
+# Install root (Hardhat) dependencies
+npm install
+
+# Install backend dependencies
+cd backend && npm install && cd ..
+
+# Install frontend dependencies
+cd frontend && npm install && cd ..
 ```
 
-### 3. Deploy to Sepolia
-Run the unified deployment script to deploy both `IPContentRegistry` and `IPLicense`:
+### 2. Configure Environment Variables
+
+**Root `.env`** (for Hardhat deployment):
+```env
+SEPOLIA_URL=https://ethereum-sepolia-rpc.publicnode.com
+PRIVATE_KEY=your_metamask_wallet_private_key
+```
+
+**`backend/.env`**:
+```env
+PINATA_JWT=your_pinata_jwt_token
+FRONTEND_ORIGIN=http://localhost:5173
+PORT=4000
+GATEWAY_URL=https://gateway.pinata.cloud/ipfs
+```
+
+**`frontend/.env`**:
+```env
+VITE_BACKEND_URL=http://localhost:4000
+VITE_CONTRACT_ADDRESS=your_deployed_registry_contract_address
+VITE_LICENSE_ADDRESS=your_deployed_license_contract_address
+```
+
+### 3. Deploy Smart Contracts (Only Once)
+
+> **Important:** Only run this step once. Redeploying creates a brand-new contract and all previously registered IPs will not appear under the new address. Your old data remains on-chain but will be inaccessible from the new contract.
+
 ```bash
+npx hardhat compile
 npx hardhat run scripts/deploy.js --network sepolia
 ```
 
-The script will output the deployed contract addresses:
-- `IPContentRegistry Address`
-- `IPLicense Address`
+Copy the printed contract addresses into your `frontend/.env` as shown in step 2.
 
-Copy these addresses into your root `.env` and `frontend/.env`.
+### 4. Start the App
 
-### 4. Configure and Launch the Backend (IPFS Pinning Service)
-1. Navigate to the backend directory:
-   ```bash
-   cd backend
-   npm install
-   ```
-2. Configure `backend/.env` (using `backend/.env.example` as a template):
-   ```env
-   PINATA_JWT=your_pinata_jwt_here
-   FRONTEND_ORIGIN=http://localhost:5173
-   PORT=4000
-   GATEWAY_URL=https://gateway.pinata.cloud/ipfs
-   ```
-3. Start the backend server:
-   ```bash
-   npm run dev
-   ```
-   Verify health status at [http://localhost:4000/api/health](http://localhost:4000/api/health).
+Open **two separate terminals**:
 
-### 5. Configure and Launch the Frontend
-1. Navigate to the frontend directory:
-   ```bash
-   cd frontend
-   npm install
-   ```
-2. Ensure `frontend/.env` is set:
-   ```env
-   VITE_BACKEND_URL=http://localhost:4000
-   VITE_CONTRACT_ADDRESS=your_deployed_registry_address
-   VITE_LICENSE_ADDRESS=your_deployed_license_address
-   ```
-3. Start the Vite dev server:
-   ```bash
-   npm run dev
-   ```
-4. Open [http://localhost:5173](http://localhost:5173) in your browser and connect MetaMask on the **Sepolia** network.
+**Terminal 1 — Backend:**
+```bash
+cd backend
+npm run dev
+```
+
+**Terminal 2 — Frontend:**
+```bash
+cd frontend
+npm run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173) in your browser and connect your MetaMask wallet on the **Sepolia Testnet**.
+
+---
+
+## Tech Stack
+
+```
+  Layer              Technology
+  ─────────────────────────────────────────────────────
+  Blockchain         Ethereum (Sepolia Testnet)
+  Smart Contracts    Solidity ^0.8.24
+  Contract Library   OpenZeppelin (ERC-721, ERC-2981)
+  Contract Dev       Hardhat, ethers.js v6
+  ─────────────────────────────────────────────────────
+  Frontend           React 19, Vite
+  Wallet Integration MetaMask  (window.ethereum / ethers.js)
+  ─────────────────────────────────────────────────────
+  Backend            Node.js, Express.js
+  File Storage       IPFS via Pinata
+  ─────────────────────────────────────────────────────
+  Hashing            SHA-256 (Browser WebCrypto API)
+  Network RPC        publicnode.com  (Sepolia JSON-RPC)
+  ─────────────────────────────────────────────────────
+```
 
 ---
 
 ## Application Flow
-
-### 1. Register & Verify IP Content
-- **Register Content:** Under the **Registration & Proof** tab, choose any file. The dApp locally computes its SHA-256 hash in the browser, uploads and pins it to IPFS via the Node backend and Pinata, and then calls `registerContent(hash, cid)` on Sepolia to mint your IP ownership NFT.
-- **Verify Ownership:** In the verification panel, select the exact same file and click **Verify On Blockchain**. The dApp queries the contract and displays the owner address, token ID, timestamp, and a direct clickable IPFS gateway link to the original file.
-
-### 2. Configure Licensing Terms (Creators)
-- Switch to the **Creator Terms** tab.
-- Enter your registered IP Token ID (e.g. `1`).
-- Set your license parameters:
-  - **Price:** ETH fee (e.g. `0.01` ETH).
-  - **Duration:** Validity in days (`0` for perpetual).
-  - **Max Uses:** Usage cap (`0` for unlimited).
-  - **License Type:** Personal, Commercial, or Exclusive.
-- Check **Make License Active for Purchase** and click **Publish Licensing Terms**.
-
-### 3. Purchase a License NFT (Buyers)
-- Switch to the **Licensing Marketplace** tab.
-- Enter the IP Token ID and click **Inspect Terms** to review terms and pricing.
-- Click **Purchase License NFT** to submit the payable transaction. Upon confirmation, MetaMask transfers the payment to the creator and mints a License NFT to your wallet!
-
-### 4. Verify & Use License Rights
-- Switch to the **Verify & Use Licenses** tab.
-- Enter the License NFT Token ID and click **Inspect License**.
-- View on-chain validity status, expiration date, parent IP reference, and usage quota.
-- Click **Use License Right** to log an on-chain usage event against your quota.
-
----
-
-## CLI Management Scripts
-
-You can also interact with the contracts directly using Hardhat scripts:
-
-```bash
-# Register content via CLI
-npx hardhat run scripts/registerContent.js --network sepolia
-
-# Verify ownership via content hash
-npx hardhat run scripts/verifyOwnership.js <0x_hash> --network sepolia
-
-# Inspect IP licensing terms
-npx hardhat run scripts/manageLicense.js view <parentTokenId>
-
-# Set licensing terms for an IP (price, durationDays, maxUses, type)
-npx hardhat run scripts/manageLicense.js set <parentTokenId> 0.05 30 10 1
-
-# Inspect a License NFT by ID
-npx hardhat run scripts/manageLicense.js check-license <licenseTokenId>
 ```
+┌─────────────┐     Upload file      ┌─────────────┐    Pin to IPFS    ┌───────────────┐
+│   Creator   │ ──────────────────►  │   Backend   │ ────────────────► │  Pinata/IPFS  │
+│  (MetaMask) │                      │  (Express)  │ ◄──────────────── │               │
+└─────────────┘                      └─────────────┘   Return CID      └───────────────┘
+       │                                    │
+       │  SHA-256 hash computed             │  CID returned to frontend
+       │  in browser (WebCrypto)            │
+       ▼                                    ▼
+┌────────────────────────────────────────────────┐
+│               Frontend (React + Vite)          │
+│                                                │
+│  1. Register tab  → registerContent(hash, CID) │
+│  2. Portfolio tab → view your IPCO NFTs        │
+│  3. Marketplace   → browse & buy licenses      │
+│  4. My Licenses   → view your IPLIC NFTs       │
+│  5. Verify tab    → verify any file on-chain   │
+└─────────────────────────────┬──────────────────┘
+                              │  ethers.js (wallet transaction)
+                              ▼
+┌─────────────────────────────────────────────────┐
+│          Ethereum Sepolia Blockchain             │
+│                                                 │
+│  ┌───────────────────────┐                      │
+│  │  IPContentRegistry    │  ERC-721 "IPCO"      │
+│  │  - registerContent()  │  Mints ownership NFT │
+│  │  - verifyByHash()     │  Timestamped record  │
+│  │  - royaltyInfo()      │  ERC-2981 royalties  │
+│  └───────────────────────┘                      │
+│             │                                   │
+│             ▼                                   │
+│  ┌───────────────────────┐                      │
+│  │     IPLicense         │  ERC-721 "IPLIC"     │
+│  │  - setListingTerms()  │  Creator sets price  │
+│  │  - buyLicense()       │  Buyer pays → NFT    │
+│  │  - revokeLicense()    │  Creator can revoke  │
+│  │  - useLicense()       │  Record usage on-chain│
+│  └───────────────────────┘                      │
+└─────────────────────────────────────────────────┘
+```
+---
+
+## Features
+
+- **IP Registration** — A file's SHA-256 fingerprint is minted as an ERC-721 NFT (IPCO), creating a permanent, timestamped proof of ownership on Sepolia.
+- **Duplicate Detection** — Before submitting a transaction, the app checks if a file is already registered and alerts the creator immediately.
+- **Licensing Marketplace** — Creators set a price, duration, and license type (Personal / Commercial / Exclusive). Buyers pay in ETH directly and receive a License NFT (IPLIC).
+- **On-Chain Verification** — Anyone can upload a file to instantly verify its registration status, owner address, and timestamp without needing a wallet.
+- **License Lifecycle Management** — Licensees can use their license rights on-chain (tracking usage count), and IP owners can revoke licenses if terms are breached.
+- **IPFS File Storage** — The original file is pinned to IPFS via Pinata so it can always be retrieved using the CID stored in the NFT record.
 
 ---
 
-## Roadmap & Team Member Tasks
+## Future Enhancements
 
-- [x] **1. Licensing & Royalties (Completed):**
-  - Expanded `contracts/IPLicense.sol` into an ERC-721 License NFT standard.
-  - Implemented payable `buyLicense` function with automatic ETH payouts to creators and excess refunds.
-  - Added configurable licensing terms (commercial, personal, time-bound, usage quotas).
-  - Integrated complete UI tabs in `frontend/src/main.jsx` and styling in `frontend/src/style.css`.
-  - Added unit test coverage with 100% passing tests in `test/IPLicense.js`.
-
-- [x] **2. IPFS and Backend Integration (Completed):**
-  - Built Express.js backend with Multer memory storage and cryptographic SHA-256 integrity validation.
-  - Server-side Pinata IPFS pinning keeping credentials securely isolated from the frontend.
-  - Integrated client-side `pinToIpfs` upload flow into `registerContent(hash, cid)` on Sepolia.
-  - Added clickable IPFS gateway links in the verification panel.
-
-- [ ] **3. Advanced Frontend & Analytics:**
-  - Creator Portfolio view (list all registered IPs owned by the connected wallet).
-  - Licensee vault (list all acquired license NFTs with direct rights access).
+- **Multi-chain support** — Deploy on Polygon or Base for significantly lower gas fees while keeping the same contract logic.
+- **Token-gated content** — License NFT holders automatically gain access to gated download links, APIs, or exclusive content without any off-chain verification step.
+- **Creator analytics dashboard** — Track total licenses sold, cumulative revenue, and per-license usage statistics from a single view.
+- **ERC-721 metadata standard** — Adopt the standard metadata JSON format so registered IP NFTs appear correctly in wallets and marketplaces like OpenSea.
